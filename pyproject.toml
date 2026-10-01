@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rl-cache-validity"
+version = "0.1.0"
+description = "Research code for RL cache validity questions"
+requires-python = ">=3.11"
+dependencies = ["torch==2.14.1", "transformers==4.57.6"]
+
+[project.scripts]
+rl-cache-validity-smoke = "rl_cache_validity.harness:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

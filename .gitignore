@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.egg-info/
+.cache/
+hf-cache/
+checkpoints/
+scientific-runs/
+outputs/
+runs/

@@ -8,7 +8,7 @@ A narrow measurement project about KV caches retained across RL weight updates.
 
 This is a research hypothesis, not a result or an established novelty claim. Existing work already studies stale-cache reuse, error propagation, adapter-aware recovery, and RL policy mismatch. See the [literature review](docs/literature-review.md).
 
-The [research plan](docs/research-plan.md) fixes the experiment sequence, controls, hardware limits, and stop conditions. The [task briefs](docs/tasks.md) define four bounded contributions that can be delegated.
+The [research plan](docs/research-plan.md) fixes the experiment sequence, controls, hardware limits, and stop conditions. See the [contribution guide](CONTRIBUTING.md), [team briefing](docs/team-briefing.html), and [task assignments](docs/tasks.md) before starting work.
 
 Initial software tests use tiny randomly initialized transformers. They validate the measurement instrument; they do not establish behavior under real RL updates, training benefits, or systems speedups. Real checkpoint experiments follow only after the instrument and protocol pass review.
 

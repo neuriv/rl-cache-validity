@@ -1,41 +1,45 @@
-# Four bounded task briefs
+# Team tasks
 
-All tasks support the same question: when does cache construction history change an RL cache-validity decision despite identical endpoint writer labels? These tasks are proposed assignments; nobody has been messaged or assigned outside this chat.
+These are starting assignments; coordinate availability within each pair. Work begins with the prior-work audit and workload feasibility. The existing CPU/MPS E0 tests validate a synthetic instrument only; they are not new RL results. The harness can be onboarded now, and a short local cost smoke test is optional. Each task stage should produce one focused PR; either partner can carry the work if the other is unavailable. E0 onboarding can merge before the real-checkpoint package arrives.
 
-## 1. Closest-work and baseline audit
+The project maintainer (`neuriv`) owns common RL and sampling settings, probability accounting, collection and manifesting of genuine consecutive checkpoints, final integration and decisions, and later GPU replication. Real-checkpoint work waits for a versioned checkpoint/config package from the maintainer. Contributors should not build a separate training stack or silently change either of the two proposed model families: Qwen2.5-0.5B-Instruct and SmolLM2-360M-Instruct. Complete both or report explicitly why one is infeasible.
 
-Deliver a claim-by-claim comparison of PipelineRL, CacheReforge, Contiguity, Sparse-RL, VeXact, and Stable Asynchrony. Point to the exact experiment, assumption, code path, and source version. Distinguish what a paper claims from what its reported experiment establishes.
+## 1. Prior-work audit — Samuel and Zain
 
-Branch: if a work already matches our construction and RL consequence, recommend a narrower remaining question or stop. If not, specify the minimum baseline needed to distinguish us. Check whether released code actually implements the paper's relevant arm, and record missing artifacts without guessing.
+**Question:** Does the closest prior work already establish the same cache-history distinction and its consequence for RL sampling or learning signals?
 
-This is literature and reproducibility analysis, not a model sweep. It frees the core team to own the causal construction and scientific interpretation.
+**Starting point:** `docs/literature-review.md`, `docs/research-plan.md`, and the existing E0 control results. Samuel leads the plain-language account of each paper's evidence; Zain checks the technical mechanism, experiment, and released implementation. Lingyuan may do one bounded 20–30 minute read focused on the strongest claim and send concerns; this is optional and not on the critical path.
 
-## 2. Workload and reward validity
+**PR:** Add `docs/prior-work-audit.md` with a focused comparison of the closest papers. For each, state the paper's claim, the exact experiment and assumptions that bear on our question, the relevant code path and source revision when available, and what the experiment does or does not establish. Link primary sources and record unavailable artifacts as unknown.
 
-Build or audit a small deterministic arithmetic workload with unambiguous answers, train/development/test splits, and a reward parser tested on correct, incorrect, malformed, truncated, and unit-suffixed answers. Estimate correctness, generation length, and the fraction of reward-varying groups on both local model families.
+**Done when:** A reader can tell whether the proposed construction and RL consequence are already covered, and what evidence would distinguish this study. If a close paper answers both, recommend narrowing or stopping. Otherwise name the minimum distinguishing baseline. Do not make a novelty claim from missing code or an unmatched experiment.
 
-Branch: if one model cannot produce informative groups, simplify on development data and explain the change. If only one template works, add a held-out template and test whether the finding depends on wording. Never select test items using the result of a cache intervention.
+## 2. Workload, parser, and model feasibility — Ritvik and Emerson
 
-Deliver the data specification, verifier audit, feasibility table, and fixed evaluation split. This is benchmark and measurement work with a small feasibility experiment.
+**Question:** Can one small deterministic arithmetic workload produce reliable, nonconstant verifiable rewards with both proposed local model families under the fixed GRPO setup?
 
-## 3. Independent instrument replication
+**Starting point:** Generation-only feasibility for the one arithmetic workload—not building or training a GRPO stack—and the two model choices in `docs/research-plan.md`. Begin with the protocol's proposed budget of 32 development prompts, 4 answers per group, and 512 tokens per sequence, including prompt and response, keeping one family resident. Ritvik leads the answer parser and verifier; Emerson leads split design and feasibility measurements across both families. Do not add model, task, or parameter sweeps.
 
-Reproduce E0/E1 on both model families using the shared interface. Verify probe positions, same endpoint weights/tags, zero-update and output-head-only controls, the theta0=theta1 null, first-layer invariance, and a fully fresh reference.
+**PR:** Add a deterministic reward parser and focused tests (suggested: `src/rl_cache_validity/reward_parser.py`, `tests/test_reward_parser.py`), plus `docs/workload-feasibility.md` describing generation settings, fixed train/development/test splits, answer format, and per-family correctness, generation length, and reward-varying group rates. Record fixed generation settings in the PR and have the maintainer validate them before comparing models. Settings may be adjusted on development data with a documented reason before freezing. Test correct, incorrect, malformed, truncated, and unit-suffixed answers.
 
-Branch: if a history effect appears, perform K-only/V-only and selected layer-block ablations. If it disappears, bound its size and investigate precision/chunking before enlarging updates. Record oracle patches separately from executable recomputation.
+**Done when:** Answers are graded reproducibly and feasibility is reported for both families, with groups—not tokens—as the reward-variation unit. If rewards are nearly constant, simplify using development data and freeze the workload before test evaluation. If either family remains uninformative, report the infeasibility; do not substitute another model or imply a two-family result.
 
-Deliver one claim-focused report with both models, the ablations needed to support it, raw manifests, and a runnable command. Owning a model alone is not a completed task.
+## 3. Harness and control audit, then matched-history replication — Hossain and Zain
 
-## 4. Cost and backend audit
+**Question:** Does the shared instrument preserve the intended matched-history contrast and all null, fresh-reference, and backend controls?
 
-Measure prefill/rebuild time and memory locally, then reproduce matched cases on the A100 when access exists. Audit whether any candidate predictor is available before its decision and whether its computation is included in timing.
+**Starting point:** The existing E0 harness and tests. E0 has passed on tiny random transformers; that verifies software invariants, not RL behavior. Hossain leads the independent harness run and control audit; Zain checks readout positions, endpoint weights, and interpretation.
 
-Branch: if rebuilding is cheap, quantify the maximum possible gain and recommend stopping an optimization claim. If it is material, scale one axis at a time—context, batch size, then model size—and explain where the bottleneck changes. Do not redesign the allocator or scheduler.
+**PR:** Add a concise `docs/harness-control-audit.md` with the exact command, source revision, package versions, backend, controls checked, any numerical floor or mismatch, and sanitized result table. Change harness code only to fix a reproduced discrepancy. After the maintainer supplies versioned consecutive checkpoints, manifests, and configs, extend the report with E1 results from both models using that package and the shared interface.
 
-Deliver a cost model tied to measurements, backend equivalence checks, and the smallest economically meaningful effect. MPS timings are not CUDA throughput estimates.
+**Done when:** E0 controls are accounted for. For E1, use held-fixed tokens, endpoint weights, writer tags, and a fully fresh comparison on both model families. Measure the numerical floor for each real model/backend and report whether the effect clears that floor and the practical threshold fixed before held-out evaluation, or give a bounded null; include sampling uncertainty for sampled continuations where applicable. If E0 differs from its expected controls, stop and repair the instrument before E1. If E1 shows a material signal, add a K/V or one-layer ablation; otherwise bound the null without inflating updates. If the checkpoint package is not supplied, stop at the E0 audit; do not collect checkpoints or build a training stack independently.
 
-## Core-team ownership
+## 4. Local cost, memory, and handoff — Emerson and Ritvik
 
-Keep the checkpoint-history construction, RL objective/probability accounting, independent-group estimator design, and final claim selection with the core team. Contributors can challenge those choices but should not independently change them.
+**Question:** Under the shared replay and settings, how much total work could a refresh decision plausibly avoid, and is there enough headroom to justify later GPU validation?
 
-Each handoff needs: question, falsifier, exact inputs/versions, one main result, appropriate uncertainty, necessary ablation or audit, limitations, and recommended next decision. Experiments require both agreed local model families before making a cross-family claim. Confirmatory training uses repeated seeds; software smoke tests do not.
+**Starting point:** `docs/research-plan.md` cost accounting. A bounded local E0 timing smoke is optional now; the opportunity audit waits until Task 2 supplies a frozen workload and the maintainer supplies the common replay/settings. Keep this work on the Mac.
+
+**PR:** Add `docs/cost-feasibility.md` with reproducible local commands/configs, both-family memory and timing measurements where feasible, plausible cache lifetime and refresh frequency, and the fraction of total work that could be avoided. Count decision, rebuild, and batching costs; do not report prefill time alone. Provide a concise handoff that lets the maintainer later rerun the same bounded cases on the A100.
+
+**Done when:** The report uses the common replay/settings, covers both families or states a measured infeasibility, and separates Mac measurements from any future CUDA result. If even an optimistic bound leaves negligible savings, recommend stopping the optimization branch. If material headroom remains, hand off the smallest useful A100 validation to the maintainer; do not add a scheduler or run GPU experiments yourself.
